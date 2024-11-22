@@ -3,7 +3,6 @@ package env
 import (
 	"fmt"
 	"os"
-	"runtime"
 
 	"github.com/joho/godotenv"
 )
@@ -12,8 +11,7 @@ func init() {
 	if os.Getenv("LOG_EXECUTION_ID") == "" {
 		err := godotenv.Load()
 		if err != nil {
-			fmt.Println("Error loading .env file")
-			runtime.Goexit()
+			panic(fmt.Sprintf("Error loading .env file: %v", err))
 		}
 	}
 }

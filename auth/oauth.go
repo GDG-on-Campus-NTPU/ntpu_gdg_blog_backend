@@ -1,9 +1,6 @@
 package auth
 
 import (
-	"fmt"
-	"runtime"
-
 	"ntpu_gdg.org/blog/env"
 
 	"golang.org/x/oauth2"
@@ -12,8 +9,7 @@ import (
 
 func newGoogleOauthConfig() *oauth2.Config {
 	if env.Getenv("GOOGLE_CLIENT_ID") == "" || env.Getenv("GOOGLE_CLIENT_SECRET") == "" {
-		fmt.Println("missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET")
-		runtime.Goexit()
+		panic("missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET")
 	}
 	return &oauth2.Config{
 		ClientID:     env.Getenv("GOOGLE_CLIENT_ID"),
