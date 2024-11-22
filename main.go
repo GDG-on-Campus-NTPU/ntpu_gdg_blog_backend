@@ -34,7 +34,3 @@ func init() {
 	}
 
 }
-
-func main() {
-
-}
