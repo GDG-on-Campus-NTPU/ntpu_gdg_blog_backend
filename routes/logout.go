@@ -12,10 +12,10 @@ func init() {
 
 		logout.POST("", func(c *gin.Context) {
 			session := sessions.Default(c)
+			defer session.Save()
 
 			session.Delete("Name")
 			session.Delete("Email")
-			session.Save()
 
 			c.JSON(200, gin.H{
 				"message": "Logged out",
