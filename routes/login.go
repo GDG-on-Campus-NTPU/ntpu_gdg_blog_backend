@@ -13,111 +13,114 @@ import (
 	"github.com/gin-gonic/gin"
 	"ntpu_gdg.org/blog/auth"
 	"ntpu_gdg.org/blog/env"
+	"ntpu_gdg.org/blog/routerRegister"
 )
 
-func AddLoginRoutes(rg *gin.RouterGroup) {
-	login := rg.Group("/login")
+func init() {
+	routerRegister.Register = append(routerRegister.Register, func(rg *gin.RouterGroup) {
+		login := rg.Group("/login")
 
-	login.GET("", func(c *gin.Context) {
-		session := sessions.Default(c)
-		defer session.Save()
+		login.GET("", func(c *gin.Context) {
+			session := sessions.Default(c)
+			defer session.Save()
 
-		redirect := c.Query("redirect")
+			redirect := c.Query("redirect")
 
-		session.Set("Redirect", redirect)
+			session.Set("Redirect", redirect)
 
-		state := uniuri.NewLen(32)
+			state := uniuri.NewLen(32)
 
-		session.Set("OauthState", state)
+			session.Set("OauthState", state)
 
-		c.Redirect(http.StatusFound, auth.GoogleOauthConfig.AuthCodeURL(state))
-	})
-
-	login.GET("/check", func(c *gin.Context) {
-		session := sessions.Default(c)
-
-		if session.Get("Email") == nil {
-			c.JSON(401, gin.H{
-				"isLoggedIn": false,
-			})
-		}
-
-		c.JSON(200, gin.H{
-			"isLoggedIn": true,
+			c.Redirect(http.StatusFound, auth.GoogleOauthConfig.AuthCodeURL(state))
 		})
-	})
 
-	login.GET("/google/callback", func(c *gin.Context) {
-		session := sessions.Default(c)
-		defer session.Save()
+		login.GET("/check", func(c *gin.Context) {
+			session := sessions.Default(c)
 
-		state := c.Query("state")
-		if state != session.Get("OauthState") {
-			c.AbortWithError(http.StatusUnauthorized, errors.New("invalid csrf token"))
-			return
-		}
+			if session.Get("Email") == nil {
+				c.JSON(401, gin.H{
+					"isLoggedIn": false,
+				})
+			}
 
-		session.Delete("OauthState")
+			c.JSON(200, gin.H{
+				"isLoggedIn": true,
+			})
+		})
 
-		code := c.Query("code")
+		login.GET("/google/callback", func(c *gin.Context) {
+			session := sessions.Default(c)
+			defer session.Save()
 
-		token, err := auth.GoogleOauthConfig.Exchange(context.Background(), code)
+			state := c.Query("state")
+			if state != session.Get("OauthState") {
+				c.AbortWithError(http.StatusUnauthorized, errors.New("invalid csrf token"))
+				return
+			}
 
-		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
-			return
-		}
+			session.Delete("OauthState")
 
-		client := auth.GoogleOauthConfig.Client(context.Background(), token)
+			code := c.Query("code")
 
-		response, err := client.Get("https://people.googleapis.com/v1/people/me?personFields=names,emailAddresses")
+			token, err := auth.GoogleOauthConfig.Exchange(context.Background(), code)
 
-		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
-			return
-		}
+			if err != nil {
+				c.AbortWithError(http.StatusInternalServerError, err)
+				return
+			}
 
-		responseData, err := io.ReadAll(response.Body)
+			client := auth.GoogleOauthConfig.Client(context.Background(), token)
 
-		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
-			return
-		}
+			response, err := client.Get("https://people.googleapis.com/v1/people/me?personFields=names,emailAddresses")
 
-		var userInfo map[string]any
+			if err != nil {
+				c.AbortWithError(http.StatusInternalServerError, err)
+				return
+			}
 
-		err = json.Unmarshal(responseData, &userInfo)
+			responseData, err := io.ReadAll(response.Body)
 
-		if err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
-			return
-		}
+			if err != nil {
+				c.AbortWithError(http.StatusInternalServerError, err)
+				return
+			}
 
-		email, ok := userInfo["emailAddresses"].([]any)[0].(map[string]any)["value"].(string)
+			var userInfo map[string]any
 
-		if !ok {
-			c.AbortWithStatus(500)
-			return
-		}
+			err = json.Unmarshal(responseData, &userInfo)
 
-		name, ok := userInfo["names"].([]any)[0].(map[string]any)["displayName"].(string)
+			if err != nil {
+				c.AbortWithError(http.StatusInternalServerError, err)
+				return
+			}
 
-		if !ok {
-			c.AbortWithStatus(500)
-			return
-		}
+			email, ok := userInfo["emailAddresses"].([]any)[0].(map[string]any)["value"].(string)
 
-		session.Set("Name", name)
-		session.Set("Email", email)
+			if !ok {
+				c.AbortWithStatus(500)
+				return
+			}
 
-		redirect := session.Get("Redirect").(string)
+			name, ok := userInfo["names"].([]any)[0].(map[string]any)["displayName"].(string)
 
-		if redirect != "" && redirect[0] != '/' {
-			redirect = env.Getenv("BASE_URL")
-		}
+			if !ok {
+				c.AbortWithStatus(500)
+				return
+			}
 
-		session.Delete("Redirect")
+			session.Set("Name", name)
+			session.Set("Email", email)
 
-		c.Redirect(http.StatusFound, redirect)
+			redirect := session.Get("Redirect").(string)
+
+			if redirect != "" && redirect[0] != '/' {
+				redirect = env.Getenv("BASE_URL")
+			}
+
+			session.Delete("Redirect")
+
+			c.Redirect(http.StatusFound, redirect)
+		})
 	})
 }
