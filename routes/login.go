@@ -84,7 +84,7 @@ func AddLoginRoutes(rg *gin.RouterGroup) {
 			return
 		}
 
-		var userInfo map[string]interface{}
+		var userInfo map[string]any
 
 		err = json.Unmarshal(responseData, &userInfo)
 
@@ -93,14 +93,14 @@ func AddLoginRoutes(rg *gin.RouterGroup) {
 			return
 		}
 
-		email, ok := userInfo["emailAddresses"].([]interface{})[0].(map[string]interface{})["value"].(string)
+		email, ok := userInfo["emailAddresses"].([]any)[0].(map[string]any)["value"].(string)
 
 		if !ok {
 			c.AbortWithStatus(500)
 			return
 		}
 
-		name, ok := userInfo["names"].([]interface{})[0].(map[string]interface{})["displayName"].(string)
+		name, ok := userInfo["names"].([]any)[0].(map[string]any)["displayName"].(string)
 
 		if !ok {
 			c.AbortWithStatus(500)
