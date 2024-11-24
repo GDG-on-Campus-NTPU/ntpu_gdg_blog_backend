@@ -20,17 +20,15 @@ func AddLoginRoutes(rg *gin.RouterGroup) {
 
 	login.GET("", func(c *gin.Context) {
 		session := sessions.Default(c)
+		defer session.Save()
 
 		redirect := c.Query("redirect")
 
 		session.Set("Redirect", redirect)
-		session.Save()
 
 		state := uniuri.NewLen(32)
 
 		session.Set("OauthState", state)
-
-		session.Save()
 
 		c.Redirect(http.StatusFound, auth.GoogleOauthConfig.AuthCodeURL(state))
 	})
@@ -51,12 +49,15 @@ func AddLoginRoutes(rg *gin.RouterGroup) {
 
 	login.GET("/google/callback", func(c *gin.Context) {
 		session := sessions.Default(c)
+		defer session.Save()
 
 		state := c.Query("state")
 		if state != session.Get("OauthState") {
 			c.AbortWithError(http.StatusUnauthorized, errors.New("invalid csrf token"))
 			return
 		}
+
+		session.Delete("OauthState")
 
 		code := c.Query("code")
 
@@ -109,8 +110,6 @@ func AddLoginRoutes(rg *gin.RouterGroup) {
 		session.Set("Name", name)
 		session.Set("Email", email)
 
-		session.Save()
-
 		redirect := session.Get("Redirect").(string)
 
 		if redirect != "" && redirect[0] != '/' {
@@ -118,7 +117,6 @@ func AddLoginRoutes(rg *gin.RouterGroup) {
 		}
 
 		session.Delete("Redirect")
-		session.Save()
 
 		c.Redirect(http.StatusFound, redirect)
 	})
