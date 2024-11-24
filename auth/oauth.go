@@ -16,6 +16,7 @@ func newGoogleOauthConfig() *oauth2.Config {
 		ClientSecret: env.Getenv("GOOGLE_CLIENT_SECRET"),
 		RedirectURL:  env.Getenv("BASE_URL") + "/api/login/google/callback",
 		Scopes: []string{
+			"https://www.googleapis.com/auth/userinfo.email",
 			"https://www.googleapis.com/auth/userinfo.profile",
 		},
 		Endpoint: google.Endpoint,
