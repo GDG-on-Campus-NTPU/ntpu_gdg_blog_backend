@@ -22,7 +22,6 @@ func init() {
 
 		login.GET("", func(c *gin.Context) {
 			session := sessions.Default(c)
-			defer session.Save()
 
 			redirect := c.Query("redirect")
 
@@ -32,34 +31,31 @@ func init() {
 
 			session.Set("OauthState", state)
 
+			session.Save()
+
 			c.Redirect(http.StatusFound, auth.GoogleOauthConfig.AuthCodeURL(state))
 		})
 
 		login.GET("/check", func(c *gin.Context) {
 			session := sessions.Default(c)
 
-			if session.Get("Email") == nil {
-				c.JSON(401, gin.H{
-					"isLoggedIn": false,
-				})
-			}
-
 			c.JSON(200, gin.H{
-				"isLoggedIn": true,
+				"isLoggedIn": session.Get("Email") != nil,
 			})
 		})
 
 		login.GET("/google/callback", func(c *gin.Context) {
 			session := sessions.Default(c)
-			defer session.Save()
 
 			state := c.Query("state")
+
 			if state != session.Get("OauthState") {
 				c.AbortWithError(http.StatusUnauthorized, errors.New("invalid csrf token"))
 				return
 			}
 
 			session.Delete("OauthState")
+			session.Save()
 
 			code := c.Query("code")
 
@@ -119,6 +115,7 @@ func init() {
 			}
 
 			session.Delete("Redirect")
+			session.Save()
 
 			c.Redirect(http.StatusFound, redirect)
 		})
