@@ -3,7 +3,6 @@ package routes
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"io"
 	"net/http"
 
@@ -50,7 +49,10 @@ func init() {
 			state := c.Query("state")
 
 			if state != session.Get("OauthState") {
-				c.AbortWithError(http.StatusUnauthorized, errors.New("invalid csrf token"))
+				//c.AbortWithError(http.StatusUnauthorized, errors.New("invalid csrf token"))
+				c.JSON(401, gin.H{
+					"error": "invalid csrf token",
+				})
 				return
 			}
 
@@ -62,7 +64,10 @@ func init() {
 			token, err := auth.GoogleOauthConfig.Exchange(context.Background(), code)
 
 			if err != nil {
-				c.AbortWithError(http.StatusInternalServerError, err)
+				//c.AbortWithError(http.StatusInternalServerError, err)
+				c.JSON(500, gin.H{
+					"error": err.Error(),
+				})
 				return
 			}
 
@@ -71,14 +76,18 @@ func init() {
 			response, err := client.Get("https://people.googleapis.com/v1/people/me?personFields=names,emailAddresses")
 
 			if err != nil {
-				c.AbortWithError(http.StatusInternalServerError, err)
+				c.JSON(500, gin.H{
+					"error": "fail to get userInfo from google",
+				})
 				return
 			}
 
 			responseData, err := io.ReadAll(response.Body)
 
 			if err != nil {
-				c.AbortWithError(http.StatusInternalServerError, err)
+				c.JSON(500, gin.H{
+					"error": "fail to read response from google api",
+				})
 				return
 			}
 
@@ -87,21 +96,27 @@ func init() {
 			err = json.Unmarshal(responseData, &userInfo)
 
 			if err != nil {
-				c.AbortWithError(http.StatusInternalServerError, err)
+				c.JSON(500, gin.H{
+					"error": "userInfo from google parse failed : Invaild Json",
+				})
 				return
 			}
 
 			email, ok := userInfo["emailAddresses"].([]any)[0].(map[string]any)["value"].(string)
 
 			if !ok {
-				c.AbortWithStatus(500)
+				c.JSON(500, gin.H{
+					"error": "userInfo from google parse failed : field email error",
+				})
 				return
 			}
 
 			name, ok := userInfo["names"].([]any)[0].(map[string]any)["displayName"].(string)
 
 			if !ok {
-				c.AbortWithStatus(500)
+				c.JSON(500, gin.H{
+					"error": "userInfo from google parse failed : field email error",
+				})
 				return
 			}
 

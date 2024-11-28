@@ -15,14 +15,18 @@ func init() {
 			name, ok := session.Get("Name").(string)
 
 			if !ok {
-				c.AbortWithStatus(401)
+				c.JSON(401, gin.H{
+					"error": "Not logged in",
+				})
 				return
 			}
 
 			email, ok := session.Get("Email").(string)
 
 			if !ok {
-				c.AbortWithStatus(401)
+				c.JSON(401, gin.H{
+					"error": "Not logged in",
+				})
 				return
 			}
 
