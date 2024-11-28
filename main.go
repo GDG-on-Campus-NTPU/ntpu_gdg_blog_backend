@@ -2,7 +2,8 @@ package blog
 
 import (
 	"ntpu_gdg.org/blog/env"
-	"ntpu_gdg.org/blog/routes"
+	"ntpu_gdg.org/blog/routerRegister"
+	_ "ntpu_gdg.org/blog/routes"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
@@ -21,15 +22,9 @@ func init() {
 
 	api := r.Group("/api")
 
-	api.GET("/", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "API Index",
-		})
-	})
-
-	routes.AddLoginRoutes(api)
-	routes.AddProfileRoutes(api)
-	routes.AddLogoutRoutes(api)
+	for _, route := range routerRegister.Register {
+		route(api)
+	}
 
 	if env.Getenv("LOG_EXECUTION_ID") != "" {
 		//gcp cloud functions

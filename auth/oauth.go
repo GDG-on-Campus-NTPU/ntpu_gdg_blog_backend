@@ -9,7 +9,7 @@ import (
 
 func newGoogleOauthConfig() *oauth2.Config {
 	if env.Getenv("GOOGLE_CLIENT_ID") == "" || env.Getenv("GOOGLE_CLIENT_SECRET") == "" {
-		panic("missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET")
+		panic("missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET for google oauth")
 	}
 	return &oauth2.Config{
 		ClientID:     env.Getenv("GOOGLE_CLIENT_ID"),
