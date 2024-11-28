@@ -11,7 +11,6 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"ntpu_gdg.org/blog/auth"
-	"ntpu_gdg.org/blog/env"
 	"ntpu_gdg.org/blog/routerRegister"
 )
 
@@ -126,7 +125,7 @@ func init() {
 			redirect := session.Get("Redirect").(string)
 
 			if redirect != "" && redirect[0] != '/' {
-				redirect = env.Getenv("BASE_URL")
+				redirect = "/"
 			}
 
 			session.Delete("Redirect")
