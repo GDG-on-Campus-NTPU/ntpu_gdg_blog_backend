@@ -1,9 +1,6 @@
 package main
 
-import (
-	_ "ntpu_gdg.org/blog"
-	_ "ntpu_gdg.org/blog/migrate"
-)
+import _ "ntpu_gdg.org/blog"
 
 func main() {
 }

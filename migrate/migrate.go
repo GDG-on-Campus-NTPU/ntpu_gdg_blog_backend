@@ -1,10 +1,12 @@
-package migrate
+package main
 
 import (
+	"fmt"
+
 	"ntpu_gdg.org/blog/database"
 )
 
-func init() {
+func main() {
 	db, err := database.CreateClient()
 	if err != nil {
 		panic(err)
@@ -15,4 +17,6 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	fmt.Print("Migration complete")
 }
