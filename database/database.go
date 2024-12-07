@@ -7,7 +7,7 @@ import (
 	"ntpu_gdg.org/blog/env"
 )
 
-var ORMModles = []any{}
+var ORMModels = []any{}
 
 func CreateClient() (*gorm.DB, error) {
 	connectString := env.Getenv("DATABASE_URL")

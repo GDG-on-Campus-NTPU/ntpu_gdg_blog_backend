@@ -12,7 +12,7 @@ func main() {
 		panic(err)
 	}
 
-	err = db.AutoMigrate(database.ORMModles...)
+	err = db.AutoMigrate(database.ORMModels...)
 
 	if err != nil {
 		panic(err)
