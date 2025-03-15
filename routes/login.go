@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/dchest/uniuri"
@@ -23,7 +24,30 @@ func init() {
 		login := rg.Group("/login")
 
 		login.GET("", func(c *gin.Context) {
+
 			session := sessions.Default(c)
+
+			//case direct access
+			baseUrl := c.Request.Host + c.Request.RequestURI
+
+			if c.Request.TLS != nil {
+				baseUrl = "https://" + baseUrl
+			} else {
+				baseUrl = "http://" + baseUrl
+			}
+
+			//case redirect from frontend
+			if c.Request.Referer() != "" {
+				if strings.LastIndex(c.Request.Referer(), "/") > 1 {
+					baseUrl = c.Request.Referer()[0:strings.LastIndex(c.Request.Referer(), "/")]
+				}
+			}
+
+			if strings.LastIndex(baseUrl, "api")-1 > 1 {
+				baseUrl = baseUrl[:strings.LastIndex(baseUrl, "api")-1]
+			}
+
+			session.Set("BaseUrl", baseUrl)
 
 			redirect := c.Query("redirect")
 
@@ -35,7 +59,7 @@ func init() {
 
 			session.Save()
 
-			c.Redirect(http.StatusFound, auth.GoogleOauthConfig.AuthCodeURL(state))
+			c.Redirect(http.StatusFound, auth.GoogleOauthConfig(baseUrl).AuthCodeURL(state))
 		})
 
 		login.GET("/check", func(c *gin.Context) {
@@ -57,12 +81,23 @@ func init() {
 				return
 			}
 
+			baseUrl := session.Get("BaseUrl").(string)
+
+			if baseUrl == "" {
+				c.JSON(500, gin.H{
+					"error": "BaseUrl is not set in session",
+				})
+				return
+			}
+
+			session.Delete("BaseUrl")
+
 			session.Delete("OauthState")
 			session.Save()
 
 			code := c.Query("code")
 
-			token, err := auth.GoogleOauthConfig.Exchange(context.Background(), code)
+			token, err := auth.GoogleOauthConfig(baseUrl).Exchange(context.Background(), code)
 
 			if err != nil {
 				c.JSON(500, gin.H{
@@ -71,7 +106,7 @@ func init() {
 				return
 			}
 
-			client := auth.GoogleOauthConfig.Client(context.Background(), token)
+			client := auth.GoogleOauthConfig(baseUrl).Client(context.Background(), token)
 
 			response, err := client.Get("https://people.googleapis.com/v1/people/me?personFields=emailAddresses")
 
