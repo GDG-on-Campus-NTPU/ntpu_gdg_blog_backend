@@ -3,14 +3,18 @@ package routes
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/dchest/uniuri"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"ntpu_gdg.org/blog/auth"
+	"ntpu_gdg.org/blog/database"
+	"ntpu_gdg.org/blog/models"
 	"ntpu_gdg.org/blog/routerRegister"
 )
 
@@ -45,10 +49,8 @@ func init() {
 		login.GET("/google/callback", func(c *gin.Context) {
 			session := sessions.Default(c)
 
-			state := c.Query("state")
-
-			if state != session.Get("OauthState") {
-				//c.AbortWithError(http.StatusUnauthorized, errors.New("invalid csrf token"))
+			if c.Query("state") != session.Get("OauthState") {
+				fmt.Println("Invalid csrf token from IP:", c.ClientIP(), "=>", c.Query("state"), "!=", session.Get("OauthState"))
 				c.JSON(401, gin.H{
 					"error": "invalid csrf token",
 				})
@@ -63,7 +65,6 @@ func init() {
 			token, err := auth.GoogleOauthConfig.Exchange(context.Background(), code)
 
 			if err != nil {
-				//c.AbortWithError(http.StatusInternalServerError, err)
 				c.JSON(500, gin.H{
 					"error": err.Error(),
 				})
@@ -72,7 +73,7 @@ func init() {
 
 			client := auth.GoogleOauthConfig.Client(context.Background(), token)
 
-			response, err := client.Get("https://people.googleapis.com/v1/people/me?personFields=names,emailAddresses")
+			response, err := client.Get("https://people.googleapis.com/v1/people/me?personFields=emailAddresses")
 
 			if err != nil {
 				c.JSON(500, gin.H{
@@ -92,9 +93,7 @@ func init() {
 
 			var userInfo map[string]any
 
-			err = json.Unmarshal(responseData, &userInfo)
-
-			if err != nil {
+			if err := json.Unmarshal(responseData, &userInfo); err != nil {
 				c.JSON(500, gin.H{
 					"error": "userInfo from google parse failed : Invaild Json",
 				})
@@ -110,26 +109,40 @@ func init() {
 				return
 			}
 
-			name, ok := userInfo["names"].([]any)[0].(map[string]any)["displayName"].(string)
+			db := database.GetDB(c)
 
-			if !ok {
+			var user models.User
+
+			if result := db.Model(&models.User{}).Where(&models.User{Email: email}).FirstOrCreate(&user); result.Error != nil {
+				fmt.Println(result.Error)
+
 				c.JSON(500, gin.H{
-					"error": "userInfo from google parse failed : field email error",
+					"error": "internal server error",
 				})
 				return
 			}
 
-			session.Set("Name", name)
+			if result := db.Model(&models.User{}).Where(&models.User{Email: email}).Update("last_login", time.Now()); result.Error != nil {
+				fmt.Println(result.Error)
+
+				c.JSON(500, gin.H{
+					"error": "internal server error",
+				})
+				return
+			}
+
 			session.Set("Email", email)
 
 			redirect := session.Get("Redirect").(string)
 
-			if redirect != "" && redirect[0] != '/' {
+			if redirect == "" || redirect[0] != '/' {
 				redirect = "/"
 			}
 
 			session.Delete("Redirect")
 			session.Save()
+
+			fmt.Println("Redirect to => ", redirect)
 
 			c.Redirect(http.StatusFound, redirect)
 		})
