@@ -4,8 +4,6 @@ import (
 	"fmt"
 
 	"ntpu_gdg.org/blog/database"
-
-	_ "ntpu_gdg.org/blog/models"
 )
 
 func main() {
