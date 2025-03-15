@@ -24,14 +24,27 @@ func init() {
 		login := rg.Group("/login")
 
 		login.GET("", func(c *gin.Context) {
-			//fmt.Println(c.Request.Referer())
 
 			session := sessions.Default(c)
 
-			baseUrl := "http://localhost:8080"
+			//case direct access
+			baseUrl := c.Request.Host + c.Request.RequestURI
 
-			if referer := c.Request.Referer(); referer != "" && strings.LastIndex(referer, "/") != -1 {
-				baseUrl = referer[:strings.LastIndex(referer, "/")]
+			if c.Request.TLS != nil {
+				baseUrl = "https://" + baseUrl
+			} else {
+				baseUrl = "http://" + baseUrl
+			}
+
+			//case redirect from frontend
+			if c.Request.Referer() != "" {
+				if strings.LastIndex(c.Request.Referer(), "/") > 1 {
+					baseUrl = c.Request.Referer()[0:strings.LastIndex(c.Request.Referer(), "/")]
+				}
+			}
+
+			if strings.LastIndex(baseUrl, "api")-1 > 1 {
+				baseUrl = baseUrl[:strings.LastIndex(baseUrl, "api")-1]
 			}
 
 			session.Set("BaseUrl", baseUrl)
@@ -76,6 +89,8 @@ func init() {
 				})
 				return
 			}
+
+			session.Delete("BaseUrl")
 
 			session.Delete("OauthState")
 			session.Save()
