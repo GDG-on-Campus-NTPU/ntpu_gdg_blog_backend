@@ -22,10 +22,11 @@ func CreateClient() (*gorm.DB, error) {
 	return db, nil
 }
 
-func getDB(c *gin.Context) *gorm.DB {
+func GetDB(c *gin.Context) *gorm.DB {
 	db, ok := c.Get("db")
 	if !ok {
-		db, err := CreateClient()
+		var err error
+		db, err = CreateClient()
 		if err != nil {
 			c.JSON(500, gin.H{
 				"error": err.Error(),

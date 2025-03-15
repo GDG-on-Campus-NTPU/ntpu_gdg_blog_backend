@@ -13,7 +13,6 @@ func init() {
 		logout.POST("", func(c *gin.Context) {
 			session := sessions.Default(c)
 
-			session.Delete("Name")
 			session.Delete("Email")
 
 			session.Save()
