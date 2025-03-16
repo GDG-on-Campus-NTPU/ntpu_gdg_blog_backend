@@ -8,11 +8,10 @@ import (
 )
 
 func init() {
-	if os.Getenv("LOG_EXECUTION_ID") == "" {
-		err := godotenv.Load()
-		if err != nil {
-			panic(fmt.Sprintf("Error loading .env file: %v", err))
-		}
+	err := godotenv.Load()
+
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "\033[31mError loading .env file If running in cloud run ignore this error\033[0m")
 	}
 }
 
