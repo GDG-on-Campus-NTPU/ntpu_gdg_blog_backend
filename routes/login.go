@@ -31,10 +31,12 @@ func init() {
 			//case direct access
 			baseUrl := c.Request.Host + c.Request.RequestURI
 
-			if c.Request.TLS != nil {
-				baseUrl = "https://" + baseUrl
-			} else {
+			if strings.Contains(c.Request.Host, "localhost") {
+				//local
 				baseUrl = "http://" + baseUrl
+			} else {
+				//cloud run function
+				baseUrl = "https://" + baseUrl
 			}
 
 			//case redirect from frontend
