@@ -1,9 +1,10 @@
 package routes
 
 import (
+	"blog/routerRegister"
+
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"ntpu_gdg.org/blog/routerRegister"
 )
 
 func init() {

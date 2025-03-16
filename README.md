@@ -10,5 +10,5 @@ go run ./migrate
 
 本地運行
 ```bash
-go run ./dev
+go run .
 ```
