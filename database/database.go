@@ -1,10 +1,11 @@
 package database
 
 import (
+	"blog/env"
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"ntpu_gdg.org/blog/env"
 )
 
 var ORMModels = []any{}

@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"ntpu_gdg.org/blog/database"
+	"blog/database"
 )
 
 func main() {

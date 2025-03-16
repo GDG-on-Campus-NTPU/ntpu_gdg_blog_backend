@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"ntpu_gdg.org/blog/env"
+	"blog/env"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"

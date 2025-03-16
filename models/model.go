@@ -3,7 +3,7 @@ package models
 import (
 	"time"
 
-	"ntpu_gdg.org/blog/database"
+	"blog/database"
 )
 
 const (
