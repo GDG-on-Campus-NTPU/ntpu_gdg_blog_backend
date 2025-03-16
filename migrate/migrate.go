@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"blog/database"
+
+	_ "blog/models"
 )
 
 func main() {
