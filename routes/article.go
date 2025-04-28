@@ -47,13 +47,15 @@ func init() {
 			}
 
 			var body struct {
-				Title      string    `json:"title"`
-				Topic      int       `json:"topic"`
-				Author     string    `json:"author"`
-				AuthorInfo string    `json:"authorInfo"`
-				Time       time.Time `json:"time"`
-				Content    string    `json:"content"`
-				Tags       []string  `json:"tags"`
+				Title       string    `json:"title"`
+				Topic       int       `json:"topic"`
+				Author      string    `json:"author"`
+				AuthorInfo  *string   `json:"authorInfo"`
+				Time        time.Time `json:"time"`
+				Content     string    `json:"content"`
+				Tags        []string  `json:"tags"`
+				Type        int       `json:"type"`
+				Description string    `json:"description"`
 			}
 
 			if err := c.ShouldBindJSON(&body); err != nil {
@@ -67,14 +69,16 @@ func init() {
 			tags := "[\"" + strings.Join(body.Tags, "\",\"") + "\"]"
 
 			article := models.Article{
-				Title:      body.Title,
-				Topic:      body.Topic,
-				Author:     body.Author,
-				AuthorInfo: body.AuthorInfo,
-				Time:       body.Time,
-				Content:    body.Content,
-				Tags:       tags,
-				UserId:     &currentUser.Id,
+				Title:       body.Title,
+				Topic:       body.Topic,
+				Author:      body.Author,
+				AuthorInfo:  body.AuthorInfo,
+				Time:        body.Time,
+				Content:     body.Content,
+				Tags:        tags,
+				UserId:      &currentUser.Id,
+				Type:        body.Type,
+				Description: body.Description,
 			}
 
 			result := db.Model(&models.Article{}).Create(&article)
@@ -147,13 +151,15 @@ func init() {
 			}
 
 			var body struct {
-				Title      string    `json:"title"`
-				Topic      int       `json:"topic"`
-				Author     string    `json:"author"`
-				AuthorInfo string    `json:"authorInfo"`
-				Time       time.Time `json:"time"`
-				Content    string    `json:"content"`
-				Tags       []string  `json:"tags"`
+				Title       string    `json:"title"`
+				Topic       int       `json:"topic"`
+				Author      string    `json:"author"`
+				AuthorInfo  *string   `json:"authorInfo"`
+				Time        time.Time `json:"time"`
+				Content     string    `json:"content"`
+				Tags        []string  `json:"tags"`
+				Type        int       `json:"type"`
+				Description string    `json:"description"`
 			}
 
 			if err := c.ShouldBindJSON(&body); err != nil {
@@ -167,13 +173,15 @@ func init() {
 			tags := "[\"" + strings.Join(body.Tags, "\",\"") + "\"]"
 
 			newArticle := models.Article{
-				Title:      body.Title,
-				Topic:      body.Topic,
-				Author:     body.Author,
-				AuthorInfo: body.AuthorInfo,
-				Time:       body.Time,
-				Content:    body.Content,
-				Tags:       tags,
+				Title:       body.Title,
+				Topic:       body.Topic,
+				Author:      body.Author,
+				AuthorInfo:  body.AuthorInfo,
+				Time:        body.Time,
+				Content:     body.Content,
+				Tags:        tags,
+				Type:        body.Type,
+				Description: body.Description,
 			}
 
 			if result := db.Model(&models.Article{}).Where(&models.Article{Id: uint(id)}).Updates(&newArticle); result.Error != nil {
@@ -283,15 +291,17 @@ func init() {
 			db := database.GetDB(c)
 
 			var articles []struct {
-				Id         uint
-				Title      string
-				Author     string
-				AuthorInfo string
-				Time       time.Time
-				Tags       []string
+				Id          uint
+				Title       string
+				Author      string
+				AuthorInfo  string
+				Time        time.Time
+				Tags        []string
+				Type        int
+				Description string
 			}
 
-			if result := db.Model(&models.Article{}).Select("id", "title", "author", "author_info", "time", "tags").Find(&articles); result.Error != nil {
+			if result := db.Model(&models.Article{}).Select("id", "title", "author", "author_info", "time", "tags", "type", "description").Find(&articles); result.Error != nil {
 				c.JSON(500, gin.H{
 					"error": "internal server error",
 				})

@@ -25,15 +25,17 @@ type User struct {
 }
 
 type Article struct {
-	Id         uint `gorm:"primaryKey;autoIncrement"`
-	Topic      int
-	Title      string
-	Author     string
-	AuthorInfo string
-	Time       time.Time
-	Content    string `gorm:"type:text"`
-	Tags       string `gorm:"type:text"`
-	UserId     *uint
+	Id          uint `gorm:"primaryKey;autoIncrement"`
+	Topic       int
+	Title       string
+	Author      string
+	AuthorInfo  *string
+	Time        time.Time
+	Content     string `gorm:"type:text"`
+	Tags        string `gorm:"type:text"`
+	UserId      *uint
+	Type        int // 文章類型 {1: 技術 2:回顧}
+	Description string
 }
 
 type Comments struct {
