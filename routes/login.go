@@ -40,6 +40,7 @@ func init() {
 			}
 
 			//case redirect from frontend
+			//看起來有漏洞 但是只要 google oauth 的 redirect uri 是正確的就不會有問題
 			if c.Request.Referer() != "" {
 				if strings.LastIndex(c.Request.Referer(), "/") > 1 {
 					baseUrl = c.Request.Referer()[0:strings.LastIndex(c.Request.Referer(), "/")]

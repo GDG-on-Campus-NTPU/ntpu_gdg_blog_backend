@@ -24,26 +24,24 @@ func init() {
 
 			email, ok := session.Get("Email").(string)
 
-			if !ok {
-				c.JSON(401, gin.H{
-					"error": "Not logged in",
-				})
-				return
-			}
+			currentUser := models.User{}
 
-			var role int
-
-			if result := db.Model(&models.User{}).Where(&models.User{Email: email}).Select("role").First(&role); result.Error != nil {
-				fmt.Println(result.Error)
+			if result := db.Model(&models.User{}).Where(&models.User{Email: email}).First(&currentUser); result.Error != nil {
 				c.JSON(500, gin.H{
 					"error": "internal server error",
 				})
 				return
 			}
-
-			if role < models.UserRoleUploader {
+			if currentUser.Role < models.UserRoleUploader {
 				c.JSON(403, gin.H{
-					"error": "沒有權限發布文章 Permission denied",
+					"error": "Permission denied 沒有權限發布文章 ",
+				})
+				return
+			}
+
+			if !ok {
+				c.JSON(401, gin.H{
+					"error": "Not logged in",
 				})
 				return
 			}
@@ -66,7 +64,7 @@ func init() {
 				return
 			}
 
-			tags := "[" + strings.Join(body.Tags, "\",\"") + "]"
+			tags := "[\"" + strings.Join(body.Tags, "\",\"") + "\"]"
 
 			article := models.Article{
 				Title:      body.Title,
@@ -76,6 +74,7 @@ func init() {
 				Time:       body.Time,
 				Content:    body.Content,
 				Tags:       tags,
+				UserId:     &currentUser.Id,
 			}
 
 			result := db.Model(&models.Article{}).Create(&article)
@@ -87,6 +86,102 @@ func init() {
 				return
 			}
 
+			c.JSON(200, gin.H{
+				"message": "success",
+			})
+		})
+
+		article.PUT(":id", func(c *gin.Context) {
+			session := sessions.Default(c)
+			db := database.GetDB(c)
+			email, ok := session.Get("Email").(string)
+			if !ok {
+				c.JSON(401, gin.H{
+					"error": "Not logged in",
+				})
+				return
+			}
+
+			currentUser := models.User{}
+			if result := db.Model(&models.User{}).Where(&models.User{Email: email}).First(&currentUser); result.Error != nil {
+				c.JSON(500, gin.H{
+					"error": "internal server error",
+				})
+				return
+			}
+			if currentUser.Role < models.UserRoleUploader {
+				c.JSON(403, gin.H{
+					"error": "Permission denied",
+				})
+				return
+			}
+
+			idStr := c.Param("id")
+			id, err := strconv.ParseUint(idStr, 10, 32)
+			if err != nil {
+				c.JSON(401, gin.H{
+					"error": "Invalid article ID",
+				})
+				return
+			}
+			article := models.Article{}
+			if result := db.Where(&models.Article{Id: uint(id)}).First(&article); result.Error != nil {
+				c.JSON(404, gin.H{
+					"error": "not found article",
+				})
+				return
+			}
+			if currentUser.Role < models.UserRoleAdmin {
+				if article.UserId == nil {
+					c.JSON(403, gin.H{
+						"error": "Permission denied; Only admin can update no uploader(be removed) article",
+					})
+					return
+				}
+				if *article.UserId != currentUser.Id {
+					c.JSON(403, gin.H{
+						"error": "Permission denied; Only admin or article owner can update this article",
+					})
+					return
+				}
+			}
+
+			var body struct {
+				Title      string    `json:"title"`
+				Topic      int       `json:"topic"`
+				Author     string    `json:"author"`
+				AuthorInfo string    `json:"authorInfo"`
+				Time       time.Time `json:"time"`
+				Content    string    `json:"content"`
+				Tags       []string  `json:"tags"`
+			}
+
+			if err := c.ShouldBindJSON(&body); err != nil {
+				c.JSON(400, gin.H{
+					"error": "Bad request",
+				})
+				fmt.Println(err)
+				return
+			}
+
+			tags := "[\"" + strings.Join(body.Tags, "\",\"") + "\"]"
+
+			newArticle := models.Article{
+				Title:      body.Title,
+				Topic:      body.Topic,
+				Author:     body.Author,
+				AuthorInfo: body.AuthorInfo,
+				Time:       body.Time,
+				Content:    body.Content,
+				Tags:       tags,
+			}
+
+			if result := db.Model(&models.Article{}).Where(&models.Article{Id: uint(id)}).Updates(&newArticle); result.Error != nil {
+				c.JSON(500, gin.H{
+					"error": "internal server error",
+				})
+				return
+			}
 			c.JSON(200, gin.H{
 				"message": "success",
 			})
@@ -115,6 +210,73 @@ func init() {
 			}
 
 			c.JSON(200, article)
+		})
+
+		article.DELETE(":id", func(c *gin.Context) {
+			session := sessions.Default(c)
+			db := database.GetDB(c)
+
+			email, ok := session.Get("Email").(string)
+			if !ok {
+				c.JSON(401, gin.H{
+					"error": "Not logged in",
+				})
+				return
+			}
+
+			currentUser := models.User{}
+			if result := db.Model(&models.User{}).Where(&models.User{Email: email}).First(&currentUser); result.Error != nil {
+				c.JSON(500, gin.H{
+					"error": "internal server error",
+				})
+				return
+			}
+			if currentUser.Role < models.UserRoleUploader {
+				c.JSON(403, gin.H{
+					"error": "Permission denied",
+				})
+				return
+			}
+			idStr := c.Param("id")
+			id, err := strconv.ParseUint(idStr, 10, 32)
+			if err != nil {
+				c.JSON(401, gin.H{
+					"error": "Invalid article ID",
+				})
+				return
+			}
+			article := models.Article{}
+			if result := db.Where(&models.Article{Id: uint(id)}).First(&article); result.Error != nil {
+				c.JSON(404, gin.H{
+					"error": "not found article",
+				})
+				return
+			}
+
+			if currentUser.Role < models.UserRoleAdmin {
+				if article.UserId == nil {
+					c.JSON(403, gin.H{
+						"error": "Permission denied; Only admin can delete no uploader(be removed) article",
+					})
+					return
+				}
+				if *article.UserId != currentUser.Id {
+					c.JSON(403, gin.H{
+						"error": "Permission denied; Only admin or article owner can delete this article",
+					})
+					return
+				}
+			}
+
+			if result := db.Delete(&article); result.Error != nil {
+				c.JSON(500, gin.H{
+					"error": "internal server error",
+				})
+				return
+			}
+			c.JSON(200, gin.H{
+				"message": "success",
+			})
 		})
 
 		article.GET("/all", func(c *gin.Context) {
