@@ -3,12 +3,12 @@ package routes
 import (
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	"blog/database"
 	"blog/models"
 	"blog/routerRegister"
+	"blog/util"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -66,17 +66,29 @@ func init() {
 				return
 			}
 
-			tags := "[\"" + strings.Join(body.Tags, "\",\"") + "\"]"
+			tags, err := util.ToDataTypeJSON(body.Tags)
+
+			if err != nil {
+				c.JSON(400, gin.H{
+					"error": "Bad request",
+				})
+				return
+			}
+
+			authorInfo := ""
+			if body.AuthorInfo != nil {
+				authorInfo = *body.AuthorInfo
+			}
 
 			article := models.Article{
 				Title:       body.Title,
 				Topic:       body.Topic,
 				Author:      body.Author,
-				AuthorInfo:  body.AuthorInfo,
+				AuthorInfo:  authorInfo,
 				Time:        body.Time,
 				Content:     body.Content,
 				Tags:        tags,
-				UserId:      &currentUser.Id,
+				UserId:      currentUser.Id,
 				Type:        body.Type,
 				Description: body.Description,
 			}
@@ -92,6 +104,7 @@ func init() {
 
 			c.JSON(200, gin.H{
 				"message": "success",
+				"id":      article.Id,
 			})
 		})
 
@@ -136,13 +149,7 @@ func init() {
 				return
 			}
 			if currentUser.Role < models.UserRoleAdmin {
-				if article.UserId == nil {
-					c.JSON(403, gin.H{
-						"error": "Permission denied; Only admin can update no uploader(be removed) article",
-					})
-					return
-				}
-				if *article.UserId != currentUser.Id {
+				if article.UserId != currentUser.Id {
 					c.JSON(403, gin.H{
 						"error": "Permission denied; Only admin or article owner can update this article",
 					})
@@ -170,13 +177,25 @@ func init() {
 				return
 			}
 
-			tags := "[\"" + strings.Join(body.Tags, "\",\"") + "\"]"
+			tags, err := util.ToDataTypeJSON(body.Tags)
+
+			if err != nil {
+				c.JSON(400, gin.H{
+					"error": "Bad request",
+				})
+				return
+			}
+
+			authorInfo := ""
+			if body.AuthorInfo != nil {
+				authorInfo = *body.AuthorInfo
+			}
 
 			newArticle := models.Article{
 				Title:       body.Title,
 				Topic:       body.Topic,
 				Author:      body.Author,
-				AuthorInfo:  body.AuthorInfo,
+				AuthorInfo:  authorInfo,
 				Time:        body.Time,
 				Content:     body.Content,
 				Tags:        tags,
@@ -262,13 +281,7 @@ func init() {
 			}
 
 			if currentUser.Role < models.UserRoleAdmin {
-				if article.UserId == nil {
-					c.JSON(403, gin.H{
-						"error": "Permission denied; Only admin can delete no uploader(be removed) article",
-					})
-					return
-				}
-				if *article.UserId != currentUser.Id {
+				if article.UserId != currentUser.Id {
 					c.JSON(403, gin.H{
 						"error": "Permission denied; Only admin or article owner can delete this article",
 					})
