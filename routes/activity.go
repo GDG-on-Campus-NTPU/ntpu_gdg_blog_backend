@@ -74,6 +74,7 @@ func init() {
 				Date:        body.Date,
 				Description: body.Description,
 				Tags:        tagsJson,
+				UserId:      currentUser.Id,
 			}
 
 			if result := db.Model(&models.Activity{}).Create(&activity); result.Error != nil {
@@ -166,7 +167,7 @@ func init() {
 
 			id, err := strconv.ParseUint(idStr, 10, 32)
 			if err != nil {
-				c.JSON(401, gin.H{
+				c.JSON(400, gin.H{
 					"error": "Invalid activity ID",
 				})
 				return
@@ -229,7 +230,7 @@ func init() {
 			idStr := c.Param("id")
 			id, err := strconv.ParseUint(idStr, 10, 32)
 			if err != nil {
-				c.JSON(401, gin.H{
+				c.JSON(400, gin.H{
 					"error": "Invalid activity ID",
 				})
 				return
