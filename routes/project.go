@@ -14,6 +14,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"gorm.io/datatypes"
+	"gorm.io/gorm"
 )
 
 func init() {
@@ -277,12 +278,15 @@ func init() {
 
 			project := models.Project{}
 
-			if result := db.Preload("Members").Where(&models.Project{Id: uint(id)}).First(&project); result.Error != nil {
+			if result := db.Model(&models.Project{}).Preload("Members", func(db *gorm.DB) *gorm.DB {
+				return db.Select("id", "name", "profile_photo", "email", "description", "avatar", "major")
+			}).Where(&models.Project{Id: uint(id)}).First(&project); result.Error != nil {
 				c.JSON(404, gin.H{"error": "Project not found"})
 				return
 			}
 
-			c.JSON(200, project)
+			//c.JSON(200, project)
+			c.Render(200, util.JsonL(project))
 		})
 
 		project.DELETE(":id", func(c *gin.Context) {
@@ -309,14 +313,14 @@ func init() {
 			idStr := c.Param("id")
 			id, err := strconv.ParseUint(idStr, 10, 32)
 			if err != nil {
-				c.JSON(400, gin.H{"error": "Invalid project ID"}) // ID 格式錯誤是 Bad Request
+				c.JSON(400, gin.H{"error": "Invalid project ID"})
 				return
 			}
 
 			project := models.Project{}
 
 			if result := db.Where(&models.Project{Id: uint(id)}).First(&project); result.Error != nil {
-				c.JSON(404, gin.H{"error": "Project not found"}) // 專案不存在是 Not Found
+				c.JSON(404, gin.H{"error": "Project not found"})
 				return
 			}
 

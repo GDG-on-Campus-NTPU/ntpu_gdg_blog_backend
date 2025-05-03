@@ -12,6 +12,7 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"gorm.io/datatypes"
 )
 
 func init() {
@@ -50,7 +51,7 @@ func init() {
 				Title       string    `json:"title"`
 				Topic       int       `json:"topic"`
 				Author      string    `json:"author"`
-				AuthorInfo  *string   `json:"authorInfo"`
+				AuthorInfo  string    `json:"authorInfo"`
 				Time        time.Time `json:"time"`
 				Content     string    `json:"content"`
 				Tags        []string  `json:"tags"`
@@ -75,16 +76,11 @@ func init() {
 				return
 			}
 
-			authorInfo := ""
-			if body.AuthorInfo != nil {
-				authorInfo = *body.AuthorInfo
-			}
-
 			article := models.Article{
 				Title:       body.Title,
 				Topic:       body.Topic,
 				Author:      body.Author,
-				AuthorInfo:  authorInfo,
+				AuthorInfo:  body.AuthorInfo,
 				Time:        body.Time,
 				Content:     body.Content,
 				Tags:        tags,
@@ -236,7 +232,7 @@ func init() {
 				return
 			}
 
-			c.JSON(200, article)
+			c.Render(200, util.JsonL(article))
 		})
 
 		article.DELETE(":id", func(c *gin.Context) {
@@ -304,14 +300,14 @@ func init() {
 			db := database.GetDB(c)
 
 			var articles []struct {
-				Id          uint
-				Title       string
-				Author      string
-				AuthorInfo  string
-				Time        time.Time
-				Tags        []string
-				Type        int
-				Description string
+				Id          uint           `json:"id"`
+				Title       string         `json:"title"`
+				Author      string         `json:"author"`
+				AuthorInfo  string         `json:"authorInfo"`
+				Time        time.Time      `json:"time"`
+				Tags        datatypes.JSON `json:"tags"`
+				Type        int            `json:"type"`
+				Description string         `json:"description"`
 			}
 
 			if result := db.Model(&models.Article{}).Select("id", "title", "author", "author_info", "time", "tags", "type", "description").Find(&articles); result.Error != nil {

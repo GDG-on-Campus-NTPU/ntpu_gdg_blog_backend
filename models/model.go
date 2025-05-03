@@ -15,18 +15,19 @@ const (
 )
 
 type User struct {
-	Id        uint `gorm:"primaryKey;autoIncrement"`
-	Name      *string
-	Email     string `gorm:"type:text"`
-	Sex       *string
-	Region    *string
-	CreatedAt time.Time  //帳號創建時間
-	LastLogin *time.Time //最後登入時間
-	Role      int        `gorm:"default:1"` //0:一般使用者 1:可上傳 2:管理員
-	Article   []Article  `gorm:"foreignKey:UserId;constraint:OnDelete:SET NULL;"`
-	Profile   *string    `gorm:"type:text"` //個人簡介
-	Avatar    *string    `gorm:"type:text"` //頭像
-	Major     *string    `gorm:"type:text"` //科系
+	Id           uint `gorm:"primaryKey;autoIncrement"`
+	Name         *string
+	Email        string `gorm:"type:text"`
+	Sex          *string
+	Region       *string
+	CreatedAt    time.Time  //帳號創建時間
+	LastLogin    *time.Time //最後登入時間
+	Role         int        `gorm:"default:0"` //0:一般使用者 1:可上傳 2:管理員
+	Article      []Article  `gorm:"foreignKey:UserId;constraint:OnDelete:SET NULL;"`
+	ProfilePhoto *string    `gorm:"type:text"` //照片
+	Description  *string    `gorm:"type:text"` //個人簡介
+	Avatar       *string    `gorm:"type:text"` //頭像
+	Major        *string    `gorm:"type:text"` //科系
 }
 
 type Article struct {
