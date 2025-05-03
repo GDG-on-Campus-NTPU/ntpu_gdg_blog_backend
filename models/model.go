@@ -65,17 +65,6 @@ type Project struct {
 	UserId      uint   `gorm:"many2many:project_uploader;"`
 }
 
-// thumbnail, title, date, description, tags
-type Activity struct {
-	Id          uint `gorm:"primaryKey;autoIncrement"`
-	Thumbnail   string
-	Title       string
-	Date        time.Time
-	Description string
-	Tags        datatypes.JSON `gorm:"type:jsonb"`
-	UserId      uint
-}
-
 func init() {
-	database.ORMModels = append(database.ORMModels, &User{}, &Article{}, &Comments{}, &Project{}, &Activity{})
+	database.ORMModels = append(database.ORMModels, &User{}, &Article{}, &Comments{}, &Project{})
 }
