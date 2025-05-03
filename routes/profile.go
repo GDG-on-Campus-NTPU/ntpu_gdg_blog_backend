@@ -4,6 +4,7 @@ import (
 	"blog/database"
 	"blog/models"
 	"blog/routerRegister"
+	"blog/util"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -36,7 +37,7 @@ func init() {
 				return
 			}
 
-			c.JSON(200, findUser)
+			c.Render(200, util.JsonL(findUser))
 		})
 
 	})
