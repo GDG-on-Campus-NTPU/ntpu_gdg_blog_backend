@@ -29,6 +29,7 @@ type JsonLower struct {
 }
 
 func (r JsonLower) Render(w http.ResponseWriter) error {
+	r.WriteContentType(w)
 	jsonData, err := fetch.Marshal(r.Data)
 	if err != nil {
 		return err
@@ -38,7 +39,10 @@ func (r JsonLower) Render(w http.ResponseWriter) error {
 }
 
 func (r JsonLower) WriteContentType(w http.ResponseWriter) {
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	header := w.Header()
+	if val := header["Content-Type"]; len(val) == 0 {
+		header["Content-Type"] = []string{"application/json; charset=utf-8"}
+	}
 }
 
 func JsonL(data any) JsonLower {
