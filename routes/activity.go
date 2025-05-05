@@ -98,7 +98,7 @@ func init() {
 
 			startDate, err := time.Parse(time.RFC3339, startStr)
 
-			if err != nil || startDate.IsZero() {
+			if err != nil {
 				c.JSON(400, gin.H{
 					"error": "Invalid startDate format",
 				})
@@ -107,7 +107,7 @@ func init() {
 
 			endDate, err := time.Parse(time.RFC3339, endStr)
 
-			if err != nil || endDate.IsZero() {
+			if err != nil {
 				c.JSON(400, gin.H{
 					"error": "Invalid endDate format",
 				})
