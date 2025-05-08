@@ -279,7 +279,7 @@ func init() {
 			project := models.Project{}
 
 			if result := db.Model(&models.Project{}).Preload("Members", func(db *gorm.DB) *gorm.DB {
-				return db.Select("id", "name", "profile_photo", "email", "description", "avatar", "major")
+				return db.Select("id", "name", "profile_photo", "description", "avatar", "major")
 			}).Where(&models.Project{Id: uint(id)}).First(&project); result.Error != nil {
 				c.JSON(404, gin.H{"error": "Project not found"})
 				return
