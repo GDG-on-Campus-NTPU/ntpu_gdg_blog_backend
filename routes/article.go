@@ -51,6 +51,7 @@ func init() {
 				Title       string    `json:"title"`
 				Topic       int       `json:"topic"`
 				Author      string    `json:"author"`
+				AuthorImage string    `json:"authorImage"`
 				AuthorInfo  string    `json:"authorInfo"`
 				Time        time.Time `json:"time"`
 				Content     string    `json:"content"`
@@ -80,6 +81,7 @@ func init() {
 				Title:       body.Title,
 				Topic:       body.Topic,
 				Author:      body.Author,
+				AuthorImage: body.AuthorImage,
 				AuthorInfo:  body.AuthorInfo,
 				Time:        body.Time,
 				Content:     body.Content,
@@ -157,6 +159,7 @@ func init() {
 				Title       string    `json:"title"`
 				Topic       int       `json:"topic"`
 				Author      string    `json:"author"`
+				AuthorImage string    `json:"authorImage"`
 				AuthorInfo  *string   `json:"authorInfo"`
 				Time        time.Time `json:"time"`
 				Content     string    `json:"content"`
@@ -191,6 +194,7 @@ func init() {
 				Title:       body.Title,
 				Topic:       body.Topic,
 				Author:      body.Author,
+				AuthorImage: body.AuthorImage,
 				AuthorInfo:  authorInfo,
 				Time:        body.Time,
 				Content:     body.Content,

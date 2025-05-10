@@ -35,6 +35,7 @@ type Article struct {
 	Topic       int
 	Title       string
 	Author      string
+	AuthorImage string
 	AuthorInfo  string
 	Time        time.Time
 	Content     string         `gorm:"type:text"`
