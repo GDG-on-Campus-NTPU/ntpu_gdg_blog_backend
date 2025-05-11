@@ -261,7 +261,10 @@ func init() {
 				return
 			}
 
-			tx.Commit()
+			if result := tx.Commit(); result.Error != nil {
+				c.JSON(500, gin.H{"error": "internal server error - commit transaction"})
+				return
+			}
 
 			c.JSON(200, gin.H{"message": "success"})
 		})

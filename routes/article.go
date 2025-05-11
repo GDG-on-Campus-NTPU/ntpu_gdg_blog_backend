@@ -314,7 +314,7 @@ func init() {
 				Description string         `json:"description"`
 			}
 
-			if result := db.Model(&models.Article{}).Select("id", "title", "author", "author_info", "time", "tags", "type", "description").Find(&articles); result.Error != nil {
+			if result := db.Model(&models.Article{}).Select("id", "title", "author", "author_image", "time", "tags", "type", "description").Find(&articles); result.Error != nil {
 				c.JSON(500, gin.H{
 					"error": "internal server error",
 				})
