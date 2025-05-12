@@ -23,9 +23,11 @@ func CreateClient() (*gorm.DB, error) {
 	return db, nil
 }
 
+var dbInstance *gorm.DB
+
 func GetDB(c *gin.Context) *gorm.DB {
-	db, ok := c.Get("db")
-	if !ok {
+	db := dbInstance
+	if db == nil {
 		var err error
 		db, err = CreateClient()
 		if err != nil {
@@ -35,5 +37,5 @@ func GetDB(c *gin.Context) *gorm.DB {
 		}
 		c.Set("db", db)
 	}
-	return db.(*gorm.DB)
+	return db
 }
