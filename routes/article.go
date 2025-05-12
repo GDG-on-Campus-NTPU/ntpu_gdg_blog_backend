@@ -12,7 +12,6 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"gorm.io/datatypes"
 )
 
 func init() {
@@ -303,16 +302,7 @@ func init() {
 		article.GET("/all", func(c *gin.Context) {
 			db := database.GetDB(c)
 
-			var articles []struct {
-				Id          uint           `json:"id"`
-				Title       string         `json:"title"`
-				Author      string         `json:"author"`
-				AuthorInfo  string         `json:"authorInfo"`
-				Time        time.Time      `json:"time"`
-				Tags        datatypes.JSON `json:"tags"`
-				Type        int            `json:"type"`
-				Description string         `json:"description"`
-			}
+			var articles []models.Article
 
 			if result := db.Model(&models.Article{}).Select("id", "title", "author", "author_image", "time", "tags", "type", "description").Find(&articles); result.Error != nil {
 				c.JSON(500, gin.H{
@@ -321,7 +311,7 @@ func init() {
 				return
 			}
 
-			c.JSON(200, articles)
+			c.Render(200, util.JsonL(articles))
 		})
 
 	})
