@@ -5,9 +5,10 @@ import (
 	"blog/models"
 	"blog/routerRegister"
 	"blog/util"
+	"strconv"
+
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"strconv"
 )
 
 func init() {
@@ -58,5 +59,79 @@ func init() {
 			c.Render(200, util.JsonL(currentUser))
 		})
 
+		user.POST("", func(c *gin.Context) {
+			session := sessions.Default(c)
+			db := database.GetDB(c)
+
+			email, ok := session.Get("Email").(string)
+
+			if !ok {
+				c.JSON(401, gin.H{
+					"error": "Not logged in",
+				})
+				return
+			}
+
+			currentUser := models.User{}
+
+			if result := db.Model(&models.User{}).Where(&models.User{Email: email}).First(&currentUser); result.Error != nil {
+				c.JSON(500, gin.H{
+					"error": "internal server error",
+				})
+				return
+			}
+
+			if currentUser.Role < models.UserRoleAdmin {
+				c.JSON(403, gin.H{
+					"error": "Permission denied",
+				})
+				return
+			}
+
+			var body struct {
+				Email        string `json:"email"`
+				Name         string `json:"name" binding:"required"`
+				ProfilePhoto string `json:"profilePhoto"`
+				Description  string `json:"description"`
+				Avatar       string `json:"avatar"`
+				Major        string `json:"major"`
+			}
+
+			if err := c.ShouldBindJSON(&body); err != nil {
+				c.JSON(400, gin.H{
+					"error": "Invalid request body",
+				})
+				return
+			}
+
+			if body.Email != "" {
+				var existingUser models.User
+				if result := db.Model(&models.User{}).Where(&models.User{Email: body.Email}).First(&existingUser); result.Error == nil {
+					c.JSON(400, gin.H{
+						"error": "Email already exists",
+					})
+					return
+				}
+			}
+
+			user := models.User{
+				Email:        body.Email,
+				Name:         &body.Name,
+				ProfilePhoto: &body.ProfilePhoto,
+				Description:  &body.Description,
+				Avatar:       &body.Avatar,
+				Major:        &body.Major,
+			}
+			if result := db.Create(&user); result.Error != nil {
+				c.JSON(500, gin.H{
+					"error": "internal server error",
+				})
+				return
+			}
+			c.JSON(200, gin.H{
+				"message": "User success",
+				"user":    user,
+			})
+		})
 	})
 }

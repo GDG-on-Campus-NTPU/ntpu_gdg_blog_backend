@@ -50,8 +50,8 @@ func init() {
 
 			var body struct {
 				Title       string    `json:"title"`
-				Thumbnail   string    `json:"thumbnail" binding:"required"`
-				Tags        []string  `json:"tag"`
+				Thumbnail   string    `json:"thumbnail"`
+				Tags        []string  `json:"tags"`
 				Description string    `json:"description"`
 				Images      []string  `json:"images"` // urls
 				StartDate   time.Time `json:"startDate"`
@@ -149,7 +149,7 @@ func init() {
 			})
 		})
 
-		project.PUT(":id", func(c *gin.Context) {
+		project.PATCH(":id", func(c *gin.Context) {
 			session := sessions.Default(c)
 			db := database.GetDB(c)
 
@@ -225,38 +225,53 @@ func init() {
 				return
 			}
 
-			var members []models.User
-			if result := tx.Find(&members, body.Members); result.Error != nil {
-				tx.Rollback()
-				fmt.Println("Error finding members for project PUT:", result.Error)
-				c.JSON(500, gin.H{"error": "internal server error - finding members for update"})
-				return
+			if len(body.Members) > 0 {
+				var members []models.User
+				if result := tx.Find(&members, body.Members); result.Error != nil {
+					tx.Rollback()
+					fmt.Println("Error finding members for project PUT:", result.Error)
+					c.JSON(500, gin.H{"error": "internal server error - finding members for update"})
+					return
+				}
+
+				if len(members) != len(body.Members) {
+					tx.Rollback()
+					c.JSON(400, gin.H{"error": "Invalid member ID(s) provided for update"})
+					return
+				}
+
+				if result := tx.Model(&project).Association("Members").Replace(members); result != nil {
+					tx.Rollback()
+					fmt.Println("Error replacing members for project PUT:", result)
+					c.JSON(500, gin.H{"error": "internal server error - replacing members"})
+					return
+				}
+			}
+			if body.Title != "" {
+				project.Title = body.Title
+			}
+			if body.Thumbnail != "" {
+				project.Thumbnail = body.Thumbnail
+			}
+			if body.Tags != nil {
+				project.Tags = tags
+			}
+			if body.Description != "" {
+				project.Description = body.Description
+			}
+			if body.Images != nil {
+				project.Images = images
+			}
+			if !body.StartDate.IsZero() {
+				project.StartDate = body.StartDate
+			}
+			if !body.EndDate.IsZero() {
+				project.EndDate = body.EndDate
 			}
 
-			if len(members) != len(body.Members) {
+			if result := tx.Model(&models.Project{}).Where(&models.Project{Id: project.Id}).Updates(project); result.Error != nil {
 				tx.Rollback()
-				c.JSON(400, gin.H{"error": "Invalid member ID(s) provided for update"})
-				return
-			}
-
-			if result := tx.Model(&project).Association("Members").Replace(members); result != nil {
-				tx.Rollback()
-				fmt.Println("Error replacing members for project PUT:", result)
-				c.JSON(500, gin.H{"error": "internal server error - replacing members"})
-				return
-			}
-
-			project.Title = body.Title
-			project.Thumbnail = body.Thumbnail
-			project.Tags = tags
-			project.Description = body.Description
-			project.Images = images
-			project.StartDate = body.StartDate
-			project.EndDate = body.EndDate
-
-			if result := tx.Model(&models.Project{}).Updates(project); result.Error != nil {
-				tx.Rollback()
-				fmt.Println("Error saving project for PUT:", result.Error)
+				fmt.Println("Error saving project for PATCH:", result.Error)
 				c.JSON(500, gin.H{"error": "internal server error - saving project"})
 				return
 			}

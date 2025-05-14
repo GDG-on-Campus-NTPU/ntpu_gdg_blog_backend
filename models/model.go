@@ -62,7 +62,7 @@ type Project struct {
 	Images      datatypes.JSON `gorm:"type:jsonb"`
 	StartDate   time.Time
 	EndDate     time.Time
-	Members     []User `gorm:"many2many:project_members;"`
+	Members     []User `gorm:"many2many:project_members;OnDelete:CASCADE;"`
 	UserId      uint   `gorm:"many2many:project_uploader;"`
 }
 
