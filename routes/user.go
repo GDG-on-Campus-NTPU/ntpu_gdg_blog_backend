@@ -56,7 +56,15 @@ func init() {
 				}
 			}
 
-			c.Render(200, util.JsonL(currentUser))
+			findUser := models.User{}
+
+			if result := db.Model(&models.User{}).Where(&models.User{Id: uint(id)}).First(&findUser); result.Error != nil {
+				c.JSON(404, gin.H{
+					"error": "not found user",
+				})
+				return
+			}
+			c.Render(200, util.JsonL(findUser))
 		})
 
 		user.POST("", func(c *gin.Context) {

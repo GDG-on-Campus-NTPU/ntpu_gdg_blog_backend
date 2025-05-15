@@ -17,7 +17,7 @@ const (
 type User struct {
 	Id           uint `gorm:"primaryKey;autoIncrement"`
 	Name         *string
-	Email        string `gorm:"type:text"`
+	Email        string `gorm:"type:text;index"`
 	Sex          *string
 	Region       *string
 	CreatedAt    time.Time  //帳號創建時間
