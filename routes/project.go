@@ -359,15 +359,7 @@ func init() {
 		project.GET("/all", func(c *gin.Context) {
 			db := database.GetDB(c)
 
-			var projects []struct {
-				Id          uint      `json:"id"`
-				Title       string    `json:"title"`
-				Thumbnail   string    `json:"thumbnail"`
-				Tags        string    `json:"tags"`
-				Description string    `json:"description"`
-				StartDate   time.Time `json:"startDate"`
-				EndDate     time.Time `json:"endDate"`
-			}
+			var projects []models.Project
 
 			if result := db.Model(&models.Project{}).Select("id", "title", "thumbnail", "tags", "description", "start_date", "end_date").Find(&projects); result.Error != nil {
 				fmt.Println("Error getting all projects:", result.Error)
@@ -375,7 +367,7 @@ func init() {
 				return
 			}
 
-			c.JSON(200, projects)
+			c.Render(200, util.JsonL(projects))
 		})
 	})
 }
